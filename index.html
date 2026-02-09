@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+	<link rel="manifest" href="manifest.json">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Tracker Pro</title>
+    <meta name="theme-color" content="#2563eb">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --electric: #10b981;
+            --gasoline: #f59e0b;
+            --purple: #8b5cf6;
+            --orange: #f97316;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --success: #10b981;
+        }
+
+        [data-theme="dark"] {
+            --bg: #111827;
+            --card: #1f2937;
+            --text: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border: #374151;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 90px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vehicle-selector {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+
+        .vehicle-selector:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tab-nav {
+            display: flex;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 60px;
+            z-index: 99;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 8px;
+            border: none;
+            background: var(--card);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+        }
+
+        .tab-btn .tab-icon {
+            font-size: 1.2rem;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 15%;
+            right: 15%;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .vehicle-banner {
+            background: linear-gradient(135deg, var(--electric) 0%, #059669 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .vehicle-banner.gas {
+            background: linear-gradient(135deg, var(--gasoline) 0%, #d97706 100%);
+        }
+
+        .vehicle-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+
+        .vehicle-info p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            background: var(--card);
+            color: var(--text);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+
+        .optional-field {
+            border: 2px dashed var(--border);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            background: rgba(0,0,0,0.02);
+        }
+
+        .optional-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .type-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .type-option input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .type-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.3s;
+            background: var(--card);
+        }
+
+        .type-option input:checked + .type-label {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+            transform: scale(1.02);
+        }
+
+        .type-option input:checked + .type-label.electric {
+            border-color: var(--electric);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .type-option input:checked + .type-label.gasoline {
+            border-color: var(--gasoline);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg);
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--electric) 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            margin-top: 0;
+            width: auto;
+        }
+
+        .vehicle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .vehicle-item {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .vehicle-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .vehicle-item.active {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .add-vehicle-card {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+        }
+
+        .add-vehicle-card:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Historial cronológico - MÁS RECIENTES PRIMERO */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-entry {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -26px;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid var(--card);
+            box-shadow: 0 0 0 2px var(--border);
+            z-index: 2;
+        }
+
+        .timeline-dot.electric {
+            background: var(--electric);
+            box-shadow: 0 0 0 2px var(--electric);
+        }
+
+        .timeline-dot.gasoline {
+            background: var(--gasoline);
+            box-shadow: 0 0 0 2px var(--gasoline);
+        }
+
+        .entry-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .entry-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .entry-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .entry-icon {
+            font-size: 1.5rem;
+        }
+
+        .entry-type-text {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .entry-date {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: #dbeafe;
+            color: var(--primary);
+        }
+
+        .btn-edit:hover {
+            background: #bfdbfe;
+            transform: scale(1.1);
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-delete:hover {
+            background: #fecaca;
+            transform: scale(1.1);
+        }
+
+        .entry-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .entry-note {
+            margin-top: 12px;
+            padding: 10px;
+            background: rgba(0,0,0,0.03);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hybrid-analysis {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 2px solid var(--orange);
+        }
+
+        [data-theme="dark"] .hybrid-analysis {
+            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+        }
+
+        .hybrid-title {
+            font-weight: 700;
+            color: var(--orange);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hybrid-stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .hybrid-stat {
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .hybrid-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .hybrid-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .btn-close:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+        }
+
+        .stat-card.electric .stat-value {
+            color: var(--electric);
+        }
+
+        .stat-card.gas .stat-value {
+            color: var(--gasoline);
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: var(--card);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: var(--primary);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle.active::after {
+            transform: translateX(22px);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1f2937;
+            color: white;
+            padding: 16px 28px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 2000;
+            font-weight: 500;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .entry-details {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .detail-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px;
+                background: rgba(0,0,0,0.02);
+                border-radius: 8px;
+            }
+            
+            .detail-label {
+                margin-top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+       <div class="header-content">
+   	     <div>
+        	    <h1>⚡ Hybrid Tracker</h1>
+        	    <div style="font-size: 0.7rem; opacity: 0.9; margin-top: 2px;">
+        	        v1.0 • by Peri
+       	     </div>
+       </div>
+             <div class="vehicle-selector" onclick="switchTab('vehicles')">
+        	    <span id="currentVehicleName">Sin vehículo</span>
+        	    <span>▼</span>
+             </div>
+    	</div>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('register')">
+            <span class="tab-icon">➕</span>
+            <span>Registrar</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('analysis')">
+            <span class="tab-icon">📊</span>
+            <span>Análisis</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('vehicles')">
+            <span class="tab-icon">🚗</span>
+            <span>Vehículos</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('settings')">
+            <span class="tab-icon">⚙️</span>
+            <span>Ajustes</span>
+        </button>
+    </nav>
+
+    <!-- PESTAÑA REGISTRAR -->
+    <div id="tab-register" class="tab-content active">
+        <div class="container">
+            <div id="registerVehicleBanner"></div>
+            
+            <div class="card">
+                <form id="consumptionForm">
+                    <div class="form-group">
+                        <label>📅 Fecha</label>
+                        <input type="date" id="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <div class="type-selector">
+                            <label class="type-option">
+                                <input type="radio" name="type" value="electric" checked onchange="updateFormType()">
+                                <div class="type-label electric">
+                                    <span class="icon">🔌</span>
+                                    <span class="type-text">Eléctrico</span>
+                                </div>
+                            </label>
+                            <label class="type-option">
+                                <input type="radio" name="type" value="gasoline" onchange="updateFormType()">
+                                <div class="type-label gasoline">
+                                    <span class="icon">⛽</span>
+                                    <span class="type-text">Gasolina</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🛣️ Odómetro (km)</label>
+                        <input type="number" id="odometer" step="1" min="0" placeholder="Ej: 45200" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="priceLabel">💰 Precio/kWh (€)</label>
+                        <input type="number" id="price" step="0.001" min="0.001" placeholder="0.15" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="amountLabel">🔋 kWh cargados</label>
+                        <input type="number" id="amount" step="0.01" min="0.01" placeholder="25.5" required>
+                    </div>
+
+                    <div class="optional-field">
+                        <div class="optional-label">
+                            <span>📝</span>
+                            <span>Notas (opcional)</span>
+                        </div>
+                        <textarea id="notes" placeholder="Ej: Viaje a Madrid, carretera..."></textarea>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 20px; text-align: center; margin-top: 20px;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Total estimado</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--primary);" id="totalCostCalc">0.00 €</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span>💾</span>
+                        Guardar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA ANÁLISIS -->
+    <div id="tab-analysis" class="tab-content">
+        <div class="container">
+            <div id="analysisVehicleBanner"></div>
+            
+            <div id="analysisStats"></div>
+            
+            <div id="analysisChart"></div>
+            
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="font-size: 1.2rem;">📋 Historial completo</h2>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Más reciente → Más antiguo</span>
+                </div>
+                <div id="historyTimeline"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA VEHÍCULOS -->
+    <div id="tab-vehicles" class="tab-content">
+        <div class="container">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">🚗 Mis Vehículos</h2>
+                <div id="vehicleList" class="vehicle-list"></div>
+                <div class="add-vehicle-card" onclick="showAddVehicleModal()">
+                    <div class="icon">➕</div>
+                    <div style="font-weight: 600;">Añadir vehículo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA AJUSTES -->
+    <div id="tab-settings" class="tab-content">
+        <div class="container">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">📤 Exportar datos</h2>
+                <button class="btn btn-secondary" onclick="exportToCSV()" style="margin-bottom: 10px;">
+                    <span>📄</span> Exportar a CSV
+                </button>
+                <button class="btn btn-secondary" onclick="exportToJSON()">
+                    <span>💾</span> Backup completo (JSON)
+                </button>
+            </div>
+            
+            <div class="card" style="margin-top: 20px;">
+                <h2 style="margin-bottom: 20px;">🎨 Apariencia</h2>
+                <div class="settings-item">
+                    <div>
+                        <h3>Modo oscuro</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Cambiar tema</p>
+                    </div>
+                    <div class="toggle" id="darkModeToggle" onclick="toggleDarkMode()"></div>
+                </div>
+            </div>
+	    <div class="card" style="margin-top: 20px; text-align: center; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
+		    <div style="font-size: 1.2rem; font-weight: 700;">Hybrid Tracker Pro</div>
+		    <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.0</div>
+		    <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px;">Desarrollado por Peri</div>
+		    <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 10px;">© 2026</div>
+	    </div>
+        </div>
+    </div>
+
+    <!-- Modal Añadir Vehículo -->
+    <div class="modal-overlay" id="vehicleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🚗 Añadir vehículo</h2>
+                <button class="btn-close" onclick="hideModal()">×</button>
+            </div>
+            <form onsubmit="addVehicle(event)">
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" id="vehicleBrand" placeholder="Ej: Toyota" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" id="vehicleModel" placeholder="Ej: Prius" required>
+                </div>
+                <div class="form-group">
+                    <label>Año (opcional)</label>
+                    <input type="number" id="vehicleYear" placeholder="2023" min="1990" max="2030">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal()" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Registro -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>✏️ Editar registro</h2>
+                <button class="btn-close" onclick="closeEditModal()">×</button>
+            </div>
+            <form id="editForm" onsubmit="saveEdit(event)">
+                <input type="hidden" id="editId">
+                
+                <div class="form-group">
+                    <label>📅 Fecha</label>
+                    <input type="date" id="editDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="editType" required>
+                        <option value="electric">🔌 Eléctrico</option>
+                        <option value="gasoline">⛽ Gasolina</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>🛣️ Odómetro (km)</label>
+                    <input type="number" id="editOdometer" step="1" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>⚡ Cantidad (L o kWh)</label>
+                    <input type="number" id="editAmount" step="0.01" min="0.01" required>
+                </div>
+
+                <div class="form-group">
+                    <label>💰 Precio unitario (€)</label>
+                    <input type="number" id="editPrice" step="0.001" min="0.001" required>
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Notas</label>
+                    <textarea id="editNotes"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let vehicles = JSON.parse(localStorage.getItem('hybridVehicles')) || [];
+        let currentVehicleId = localStorage.getItem('hybridCurrentVehicle') || null;
+        let entries = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCurrentVehicle();
+            initDarkMode();
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('price').addEventListener('input', calculateTotal);
+            document.getElementById('amount').addEventListener('input', calculateTotal);
+            document.getElementById('consumptionForm').addEventListener('submit', handleSubmit);
+        });
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            event.target.closest('.tab-btn').classList.add('active');
+            
+            if (tab === 'analysis') renderAnalysis();
+        }
+
+        function loadCurrentVehicle() {
+            if (currentVehicleId && vehicles.find(v => v.id === currentVehicleId)) {
+                entries = JSON.parse(localStorage.getItem(`hybridEntries_${currentVehicleId}`)) || [];
+                updateVehicleDisplay();
+            } else if (vehicles.length > 0) {
+                currentVehicleId = vehicles[0].id;
+                entries = JSON.parse(localStorage.getItem(`hybridEntries_${currentVehicleId}`)) || [];
+                updateVehicleDisplay();
+            }
+        }
+
+        function updateVehicleDisplay() {
+            const vehicle = vehicles.find(v => v.id === currentVehicleId);
+            const nameEl = document.getElementById('currentVehicleName');
+            
+            if (vehicle) {
+                nameEl.textContent = `${vehicle.brand} ${vehicle.model}`;
+                const bannerHtml = `
+                    <div class="vehicle-banner">
+                        <div class="vehicle-info">
+                            <h3>${vehicle.brand} ${vehicle.model}</h3>
+                            <p>${entries.length} registros</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('registerVehicleBanner').innerHTML = bannerHtml;
+                document.getElementById('analysisVehicleBanner').innerHTML = bannerHtml;
+            } else {
+                nameEl.textContent = 'Sin vehículo';
+                document.getElementById('registerVehicleBanner').innerHTML = '';
+                document.getElementById('analysisVehicleBanner').innerHTML = '';
+            }
+            
+            updateVehicleList();
+        }
+
+        function updateVehicleList() {
+            const container = document.getElementById('vehicleList');
+            if (vehicles.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay vehículos</div>';
+                return;
+            }
+            
+            container.innerHTML = vehicles.map(v => {
+                const count = JSON.parse(localStorage.getItem(`hybridEntries_${v.id}`) || '[]').length;
+                return `
+                    <div class="vehicle-item ${v.id === currentVehicleId ? 'active' : ''}" onclick="selectVehicle('${v.id}')">
+                        <div>
+                            <h3>${v.brand} ${v.model}</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary);">${v.year || ''} • ${count} registros</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAddVehicleModal() {
+            document.getElementById('vehicleModal').classList.add('show');
+        }
+
+        function hideModal() {
+            document.getElementById('vehicleModal').classList.remove('show');
+        }
+
+        function addVehicle(e) {
+            e.preventDefault();
+            const vehicle = {
+                id: Date.now().toString(),
+                brand: document.getElementById('vehicleBrand').value,
+                model: document.getElementById('vehicleModel').value,
+                year: document.getElementById('vehicleYear').value || null
+            };
+            
+            vehicles.push(vehicle);
+            localStorage.setItem('hybridVehicles', JSON.stringify(vehicles));
+            
+            if (!currentVehicleId) {
+                currentVehicleId = vehicle.id;
+                localStorage.setItem('hybridCurrentVehicle', currentVehicleId);
+            }
+            
+            hideModal();
+            updateVehicleDisplay();
+            showToast('🚗 Vehículo añadido');
+        }
+
+        function selectVehicle(id) {
+            currentVehicleId = id;
+            localStorage.setItem('hybridCurrentVehicle', id);
+            loadCurrentVehicle();
+            showToast('✅ Vehículo cambiado');
+        }
+
+        function updateFormType() {
+            const type = document.querySelector('input[name="type"]:checked').value;
+            document.getElementById('priceLabel').textContent = `💰 Precio/${type === 'electric' ? 'kWh' : 'litro'} (€)`;
+            document.getElementById('amountLabel').textContent = type === 'electric' ? '🔋 kWh cargados' : '⛽ Litros';
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            document.getElementById('totalCostCalc').textContent = (price * amount).toFixed(2) + ' €';
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            if (!currentVehicleId) {
+                showToast('⚠️ Selecciona un vehículo primero');
+                return;
+            }
+            
+            const entry = {
+                id: Date.now(),
+                date: document.getElementById('date').value,
+                type: document.querySelector('input[name="type"]:checked').value,
+                odometer: parseFloat(document.getElementById('odometer').value),
+                price: parseFloat(document.getElementById('price').value),
+                amount: parseFloat(document.getElementById('amount').value),
+                total: parseFloat((parseFloat(document.getElementById('price').value) * parseFloat(document.getElementById('amount').value)).toFixed(2)),
+                notes: document.getElementById('notes').value || null
+            };
+            
+            entries.push(entry);
+            localStorage.setItem(`hybridEntries_${currentVehicleId}`, JSON.stringify(entries));
+            
+            const date = document.getElementById('date').value;
+            document.getElementById('consumptionForm').reset();
+            document.getElementById('date').value = date;
+            document.getElementById('totalCostCalc').textContent = '0.00 €';
+            
+            updateVehicleDisplay();
+            showToast('✅ Guardado');
+        }
+
+        // ANÁLISIS CON ORDEN INVERSO (MÁS RECIENTES PRIMERO)
+        function renderAnalysis() {
+            if (!currentVehicleId || entries.length === 0) {
+                document.getElementById('analysisStats').innerHTML = '';
+                document.getElementById('analysisChart').innerHTML = '';
+                document.getElementById('historyTimeline').innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 4rem;">📊</div>
+                        <h3>${!currentVehicleId ? 'Selecciona un vehículo' : 'Sin registros'}</h3>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Ordenar de MÁS RECIENTE a MÁS ANTIGUO para mostrar
+            const sortedForDisplay = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+            // Ordenar de MÁS ANTIGUO a MÁS RECIENTE para cálculos
+            const sortedForCalc = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            renderStats();
+            renderChart(sortedForCalc);
+            renderTimeline(sortedForDisplay, sortedForCalc);
+        }
+
+        function renderStats() {
+            const electric = entries.filter(e => e.type === 'electric');
+            const gas = entries.filter(e => e.type === 'gasoline');
+            
+            document.getElementById('analysisStats').innerHTML = `
+                <div class="stats-grid" style="margin-bottom: 20px;">
+                    <div class="stat-card electric">
+                        <div class="stat-icon">🔌</div>
+                        <div class="stat-value">${electric.reduce((s, e) => s + e.amount, 0).toFixed(1)}</div>
+                        <div class="stat-label-main">kWh totales</div>
+                    </div>
+                    <div class="stat-card gas">
+                        <div class="stat-icon">⛽</div>
+                        <div class="stat-value">${gas.reduce((s, e) => s + e.amount, 0).toFixed(1)}</div>
+                        <div class="stat-label-main">Litros gasolina</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🛣️</div>
+                        <div class="stat-value">${entries.length >= 2 ? 
+                            (Math.max(...entries.map(e => e.odometer)) - Math.min(...entries.map(e => e.odometer))).toLocaleString() 
+                            : '0'}</div>
+                        <div class="stat-label-main">Km totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💶</div>
+                        <div class="stat-value">${entries.reduce((s, e) => s + e.total, 0).toFixed(0)}€</div>
+                        <div class="stat-label-main">Gasto total</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderChart(sortedForCalc) {
+            const gasEntries = sortedForCalc.filter(e => e.type === 'gasoline');
+            
+            if (gasEntries.length < 2) {
+                document.getElementById('analysisChart').innerHTML = '';
+                return;
+            }
+            
+            document.getElementById('analysisChart').innerHTML = `
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">📈 Evolución consumo</h3>
+                    <div class="chart-container">
+                        <canvas id="consumptionChart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            const labels = [];
+            const data = [];
+            let lastGas = null;
+            
+            for (let entry of sortedForCalc) {
+                if (entry.type === 'gasoline') {
+                    if (lastGas) {
+                        const km = entry.odometer - lastGas.odometer;
+                        const entriesBetween = sortedForCalc.filter(e => 
+                            new Date(e.date) > new Date(lastGas.date) && 
+                            new Date(e.date) <= new Date(entry.date)
+                        );
+                        const totalCost = entriesBetween.reduce((s, e) => s + e.total, 0);
+                        const costPer100 = (totalCost * 100) / km;
+                        const equivalent = costPer100 / entry.price;
+                        
+                        labels.push(new Date(entry.date).toLocaleDateString('es-ES', {day:'numeric', month:'short'}));
+                        data.push(equivalent);
+                    }
+                    lastGas = entry;
+                }
+            }
+            
+            if (window.myChart) window.myChart.destroy();
+            
+            const ctx = document.getElementById('consumptionChart');
+            if (!ctx) return;
+            
+            window.myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'L/100km equivalente',
+                        data,
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // TIMELINE: MÁS RECIENTES PRIMERO
+        function renderTimeline(sortedForDisplay, sortedForCalc) {
+            const container = document.getElementById('historyTimeline');
+            
+            container.innerHTML = `
+                <div class="timeline">
+                    ${sortedForDisplay.map((entry, displayIndex) => {
+                        // Encontrar índice en el array ordenado para cálculos
+                        const calcIndex = sortedForCalc.findIndex(e => e.id === entry.id);
+                        const prevEntry = calcIndex > 0 ? sortedForCalc[calcIndex - 1] : null;
+                        const km = prevEntry ? entry.odometer - prevEntry.odometer : 0;
+                        
+                        // Calcular análisis híbrido si es gasolina
+                        let hybridHtml = '';
+                        if (entry.type === 'gasoline' && calcIndex > 0) {
+                            // Buscar repostaje de gasolina anterior en el orden cronológico
+                            const prevGasIndex = sortedForCalc.slice(0, calcIndex).reverse().findIndex(e => e.type === 'gasoline');
+                            if (prevGasIndex !== -1) {
+                                const actualPrevGasIndex = calcIndex - 1 - prevGasIndex;
+                                const prevGas = sortedForCalc[actualPrevGasIndex];
+                                const kmTotal = entry.odometer - prevGas.odometer;
+                                const entriesBetween = sortedForCalc.filter(e => 
+                                    new Date(e.date) > new Date(prevGas.date) && 
+                                    new Date(e.date) <= new Date(entry.date)
+                                );
+                                const totalCost = entriesBetween.reduce((s, e) => s + e.total, 0);
+                                const costPer100 = (totalCost * 100) / kmTotal;
+                                const equivalent = costPer100 / entry.price;
+                                
+                                hybridHtml = `
+                                    <div class="hybrid-analysis">
+                                        <div class="hybrid-title">📊 Desde repostaje anterior</div>
+                                        <div class="hybrid-stats">
+                                            <div class="hybrid-stat">
+                                                <div class="hybrid-value">${kmTotal.toLocaleString()}</div>
+                                                <div class="hybrid-label">km</div>
+                                            </div>
+                                            <div class="hybrid-stat">
+                                                <div class="hybrid-value">${costPer100.toFixed(2)}€</div>
+                                                <div class="hybrid-label">coste/100km</div>
+                                            </div>
+                                            <div class="hybrid-stat">
+                                                <div class="hybrid-value" style="color: var(--orange);">${equivalent.toFixed(2)}</div>
+                                                <div class="hybrid-label">L/100km eq.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        return `
+                            <div class="timeline-entry">
+                                <div class="timeline-dot ${entry.type}"></div>
+                                <div class="entry-card">
+                                    <div class="entry-header">
+                                        <div class="entry-title">
+                                            <span class="entry-icon">${entry.type === 'electric' ? '🔌' : '⛽'}</span>
+                                            <div>
+                                                <div class="entry-type-text">${entry.type === 'electric' ? 'Electricidad' : 'Gasolina'}</div>
+                                                <div class="entry-date">${new Date(entry.date).toLocaleDateString('es-ES', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</div>
+                                            </div>
+                                        </div>
+                                        <div class="entry-actions">
+                                            <button class="btn-icon btn-edit" onclick="openEditModal(${entry.id})" title="Editar">✏️</button>
+                                            <button class="btn-icon btn-delete" onclick="deleteEntry(${entry.id})" title="Borrar">🗑️</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="entry-details">
+                                        <div class="detail-item">
+                                            <div class="detail-value">${entry.odometer.toLocaleString()}</div>
+                                            <div class="detail-label">Odómetro (km)</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-value">${entry.amount} ${entry.type === 'electric' ? 'kWh' : 'L'}</div>
+                                            <div class="detail-label">Cantidad</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-value">${entry.total.toFixed(2)} €</div>
+                                            <div class="detail-label">Total</div>
+                                        </div>
+                                    </div>
+                                    
+                                    ${km > 0 ? `
+                                        <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary);">
+                                            ↳ ${km.toLocaleString()} km desde anterior
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${entry.notes ? `
+                                        <div class="entry-note">
+                                            <span>📝</span>
+                                            ${entry.notes}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${hybridHtml}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function openEditModal(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            
+            document.getElementById('editId').value = id;
+            document.getElementById('editDate').value = entry.date;
+            document.getElementById('editType').value = entry.type;
+            document.getElementById('editOdometer').value = entry.odometer;
+            document.getElementById('editAmount').value = entry.amount;
+            document.getElementById('editPrice').value = entry.price;
+            document.getElementById('editNotes').value = entry.notes || '';
+            
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function saveEdit(e) {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('editId').value);
+            const index = entries.findIndex(e => e.id === id);
+            
+            if (index === -1) return;
+            
+            entries[index] = {
+                id,
+                date: document.getElementById('editDate').value,
+                type: document.getElementById('editType').value,
+                odometer: parseFloat(document.getElementById('editOdometer').value),
+                amount: parseFloat(document.getElementById('editAmount').value),
+                price: parseFloat(document.getElementById('editPrice').value),
+                total: parseFloat((parseFloat(document.getElementById('editAmount').value) * parseFloat(document.getElementById('editPrice').value)).toFixed(2)),
+                notes: document.getElementById('editNotes').value || null
+            };
+            
+            localStorage.setItem(`hybridEntries_${currentVehicleId}`, JSON.stringify(entries));
+            
+            closeEditModal();
+            renderAnalysis();
+            showToast('✅ Registro actualizado');
+        }
+
+        function deleteEntry(id) {
+            if (!confirm('¿Eliminar este registro?')) return;
+            
+            entries = entries.filter(e => e.id !== id);
+            localStorage.setItem(`hybridEntries_${currentVehicleId}`, JSON.stringify(entries));
+            
+            renderAnalysis();
+            updateVehicleDisplay();
+            showToast('🗑️ Eliminado');
+        }
+
+function exportToCSV() {
+    if (!currentVehicleId || entries.length === 0) {
+        showToast('⚠️ No hay datos');
+        return;
+    }
+    
+    const vehicle = vehicles.find(v => v.id === currentVehicleId);
+    // Usar punto y coma como separador (estándar Excel español)
+    let csv = 'Fecha;Tipo;Odometro;Cantidad;Precio;Total;Notas\n';
+    
+    entries.forEach(e => {
+        // Traducir tipo a español
+        const tipo = e.type === 'electric' ? 'Electrico' : 'Gasolina';
+        
+        // Usar coma como separador decimal (formato español)
+        const odometer = e.odometer.toString().replace('.', ',');
+        const amount = e.amount.toString().replace('.', ',');
+        const price = e.price.toString().replace('.', ',');
+        const total = e.total.toString().replace('.', ',');
+        
+        csv += `${e.date};${tipo};${odometer};${amount};${price};${total};"${e.notes || ''}"\n`;
+    });
+    
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hybrid-${vehicle.brand}-${vehicle.model}.csv`;
+    a.click();
+    showToast('📄 CSV descargado');
+}
+
+        function exportToJSON() {
+            const data = {
+                vehicles,
+                currentVehicleId,
+                exportDate: new Date().toISOString()
+            };
+            
+            vehicles.forEach(v => {
+                data[`entries_${v.id}`] = JSON.parse(localStorage.getItem(`hybridEntries_${v.id}`) || '[]');
+            });
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hybrid-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast('💾 Backup guardado');
+        }
+
+        function initDarkMode() {
+            if (localStorage.getItem('hybridDarkMode') === 'true') {
+                toggleDarkMode(true);
+            }
+        }
+
+        function toggleDarkMode(force) {
+            const isDark = force !== undefined ? force : !document.documentElement.hasAttribute('data-theme');
+            
+            if (isDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('darkModeToggle').classList.add('active');
+                localStorage.setItem('hybridDarkMode', 'true');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                document.getElementById('darkModeToggle').classList.remove('active');
+                localStorage.setItem('hybridDarkMode', 'false');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+	// Registrar Service Worker
+	if ('serviceWorker' in navigator) {
+	  navigator.serviceWorker.register('sw.js')
+	    .then(reg => console.log('Service Worker registrado'))
+	    .catch(err => console.log('Error:', err));
+	}
+</body>
+</html>
