@@ -807,7 +807,7 @@
    	     <div>
         	    <h1>⚡ Hybrid Tracker</h1>
         	    <div style="font-size: 0.7rem; opacity: 0.9; margin-top: 2px;">
-        	        v1.0 • by Peri
+        	        v1.1 • by Peri
        	     </div>
        </div>
              <div class="vehicle-selector" onclick="switchTab('vehicles')">
@@ -939,17 +939,27 @@
     </div>
 
     <!-- PESTAÑA AJUSTES -->
-    <div id="tab-settings" class="tab-content">
-        <div class="container">
-            <div class="card">
-                <h2 style="margin-bottom: 20px;">📤 Exportar datos</h2>
-                <button class="btn btn-secondary" onclick="exportToCSV()" style="margin-bottom: 10px;">
-                    <span>📄</span> Exportar a CSV
-                </button>
-                <button class="btn btn-secondary" onclick="exportToJSON()">
-                    <span>💾</span> Backup completo (JSON)
-                </button>
-            </div>
+	<div class="card">
+		<h2 style="margin-bottom: 20px;">📤 Datos y Backup</h2>
+		<button class="btn btn-secondary" onclick="exportToCSV()" style="margin-bottom: 10px;">
+			<span>📄</span> Exportar a CSV
+		</button>
+    
+		<input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
+		<button class="btn btn-secondary" onclick="document.getElementById('csvFileInput').click()" style="margin-bottom: 10px;">
+			<span>📥</span> Importar desde CSV
+		</button>
+    
+		<button class="btn btn-secondary" onclick="exportToJSON()" style="margin-bottom: 10px;">
+			<span>💾</span> Backup completo (JSON)
+		</button>
+
+		<!-- NUEVO: Botón e Input para Restaurar JSON -->
+		<input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importFromJSON(event)">
+		<button class="btn btn-secondary" onclick="document.getElementById('jsonFileInput').click()">
+			<span>🔄</span> Restaurar backup (JSON)
+		</button>
+	</div>
             
             <div class="card" style="margin-top: 20px;">
                 <h2 style="margin-bottom: 20px;">🎨 Apariencia</h2>
@@ -963,7 +973,7 @@
             </div>
 	    <div class="card" style="margin-top: 20px; text-align: center; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
 		    <div style="font-size: 1.2rem; font-weight: 700;">Hybrid Tracker Pro</div>
-		    <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.0</div>
+		    <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.1</div>
 		    <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px;">Desarrollado por Peri</div>
 		    <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 10px;">© 2026</div>
 	    </div>
@@ -1529,6 +1539,69 @@ function exportToCSV() {
     showToast('📄 CSV descargado');
 }
 
+function importFromCSV(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!currentVehicleId) {
+        showToast('⚠️ Selecciona un vehículo donde importar');
+        e.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const lines = evt.target.result.split('\n');
+        let importedCount = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const cols = line.match(/(?:[^\s;"]+|"[^"]*")+/g) || line.split(';');
+
+            if (cols.length >= 6) {
+                const date = cols[0].trim();
+                const rawType = cols[1].trim().toLowerCase();
+                const type = (rawType === 'electrico' || rawType === 'electric') ? 'electric' : 'gasoline';
+                
+                const odometer = parseFloat(cols[2].replace(',', '.'));
+                const amount = parseFloat(cols[3].replace(',', '.'));
+                const price = parseFloat(cols[4].replace(',', '.'));
+                const total = parseFloat(cols[5].replace(',', '.'));
+                const notes = cols[6] ? cols[6].replace(/"/g, '').trim() : null;
+
+                if (!isNaN(odometer) && !isNaN(amount) && !isNaN(price)) {
+                    entries.push({
+                        id: Date.now() + i,
+                        date,
+                        type,
+                        odometer,
+                        amount,
+                        price,
+                        total: total || parseFloat((amount * price).toFixed(2)),
+                        notes: notes || null
+                    });
+                    importedCount++;
+                }
+            }
+        }
+
+        if (importedCount > 0) {
+            entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+            localStorage.setItem(`hybridEntries_${currentVehicleId}`, JSON.stringify(entries));
+            updateVehicleDisplay();
+            showToast(`✅ Se importaron ${importedCount} registros`);
+        } else {
+            showToast('⚠️ No se encontraron registros válidos');
+        }
+
+        e.target.value = '';
+    };
+
+    reader.readAsText(file, 'UTF-8');
+}
+
         function exportToJSON() {
             const data = {
                 vehicles,
@@ -1548,6 +1621,49 @@ function exportToCSV() {
             a.click();
             showToast('💾 Backup guardado');
         }
+		function importFromJSON(e) {
+			const file = e.target.files[0];
+			if (!file) return;
+
+			if (!confirm('⚠️ Esta acción reemplazará los datos actuales por los del backup. ¿Deseas continuar?')) {
+				e.target.value = '';
+			return;
+		}
+
+			const reader = new FileReader();
+				reader.onload = function(evt) {
+					try {
+						const data = JSON.parse(evt.target.result);
+
+			if (data.vehicles && Array.isArray(data.vehicles)) {
+                vehicles = data.vehicles;
+                localStorage.setItem('hybridVehicles', JSON.stringify(vehicles));
+
+                if (data.currentVehicleId) {
+                    currentVehicleId = data.currentVehicleId;
+                    localStorage.setItem('hybridCurrentVehicle', currentVehicleId);
+                }
+
+                vehicles.forEach(v => {
+                    if (data[`entries_${v.id}`]) {
+                        localStorage.setItem(`hybridEntries_${v.id}`, JSON.stringify(data[`entries_${v.id}`]));
+                    }
+                });
+
+                loadCurrentVehicle();
+                showToast('✅ Backup restaurado con éxito');
+            } else {
+                showToast('⚠️ El archivo JSON no tiene un formato válido');
+            }
+				} catch (err) {
+					showToast('❌ Error al leer el archivo de backup');
+			}
+
+			e.target.value = '';
+			};
+
+		reader.readAsText(file, 'UTF-8');
+		}
 
         function initDarkMode() {
             if (localStorage.getItem('hybridDarkMode') === 'true') {
