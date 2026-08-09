@@ -1563,6 +1563,123 @@ function exportToCSV() {
             a.click();
             showToast('💾 Backup guardado');
         }
+		function importFromCSV(event) {
+			const file = event.target.files[0];
+			if (!file) return;
+
+			if (!currentVehicleId) {
+				showToast('⚠️ Selecciona o crea un vehículo primero');
+				event.target.value = '';
+				return;
+			}
+
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				try {
+					const lines = e.target.result.split('\n');
+					if (lines.length < 2) throw new Error("Archivo vacío o sin datos");
+
+					let importedCount = 0;
+
+					// Ignorar la primera línea (cabecera)
+					for (let i = 1; i < lines.length; i++) {
+						const line = lines[i].trim();
+						if (!line) continue;
+
+						// Separar por ; (estándar Excel español)
+						const columns = line.split(';');
+						if (columns.length < 6) continue;
+
+						const [date, tipoRaw, odometerRaw, amountRaw, priceRaw, totalRaw, notesRaw] = columns;
+
+						const type = tipoRaw.toLowerCase().includes('elect') ? 'electric' : 'gasoline';
+						const odometer = parseFloat(odometerRaw.replace(',', '.'));
+						const amount = parseFloat(amountRaw.replace(',', '.'));
+						const price = parseFloat(priceRaw.replace(',', '.'));
+						const total = totalRaw ? parseFloat(totalRaw.replace(',', '.')) : parseFloat((amount * price).toFixed(2));
+						const notes = notesRaw ? notesRaw.replace(/^"|"$/g, '') : null;
+
+						if (isNaN(odometer) || isNaN(amount) || isNaN(price)) continue;
+
+						// Evitar duplicar un registro exactamente igual en la misma fecha y odómetro
+						const exists = entries.some(e => e.date === date && e.odometer === odometer);
+						if (!exists) {
+							entries.push({
+								id: Date.now() + Math.floor(Math.random() * 1000),
+								date,
+								type,
+								odometer,
+								amount,
+								price,
+								total,
+								notes
+							});
+							importedCount++;
+						}
+					}
+
+					if (importedCount > 0) {
+						localStorage.setItem(`hybridEntries_${currentVehicleId}`, JSON.stringify(entries));
+						updateVehicleDisplay();
+						showToast(`✅ ${importedCount} registros importados`);
+					} else {
+						showToast('ℹ️ No se añadieron nuevos registros');
+					}
+				} catch (err) {
+					console.error(err);
+					showToast('❌ Error al procesar el archivo CSV');
+				}
+				event.target.value = ''; // Limpiar selección
+			};
+			reader.readAsText(file, 'UTF-8');
+		}
+
+		function importFromJSON(event) {
+			const file = event.target.files[0];
+			if (!file) return;
+
+			if (!confirm('¿Quieres restaurar los datos? Se sobreescribirán los datos actuales con los del archivo.')) {
+				event.target.value = '';
+				return;
+			}
+
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				try {
+					const data = JSON.parse(e.target.result);
+
+					if (!data.vehicles || !Array.isArray(data.vehicles)) {
+						throw new Error("Formato de backup inválido");
+					}
+
+					// Restaurar lista de vehículos
+					vehicles = data.vehicles;
+					localStorage.setItem('hybridVehicles', JSON.stringify(vehicles));
+
+					// Restaurar entradas de cada vehículo
+					vehicles.forEach(v => {
+						const key = `entries_${v.id}`;
+						if (data[key]) {
+							localStorage.setItem(`hybridEntries_${v.id}`, JSON.stringify(data[key]));
+						}
+					});
+
+					// Restablecer vehículo seleccionado
+					currentVehicleId = data.currentVehicleId || (vehicles.length > 0 ? vehicles[0].id : null);
+					if (currentVehicleId) {
+						localStorage.setItem('hybridCurrentVehicle', currentVehicleId);
+					}
+
+					loadCurrentVehicle();
+					showToast('💾 Copia de seguridad restaurada');
+				} catch (err) {
+					console.error(err);
+					showToast('❌ Error al leer el archivo de backup JSON');
+				}
+				event.target.value = ''; // Limpiar selección
+			};
+			reader.readAsText(file);
+		}
 
         function initDarkMode() {
             if (localStorage.getItem('hybridDarkMode') === 'true') {
