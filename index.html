@@ -1394,13 +1394,13 @@
             }
         }
 
-        function renderMaintenances() {
+function renderMaintenances() {
             const list = document.getElementById('maintenanceList');
             const totalElem = document.getElementById('totalMaintCost');
 
             if (!list) return;
 
-            if (maintenances.length === 0) {
+            if (!maintenances || maintenances.length === 0) {
                 list.innerHTML = `
                     <div class="card empty-state">
                         <p>No hay mantenimientos registrados en este vehículo.</p>
@@ -1414,8 +1414,16 @@
 
             list.innerHTML = maintenances.map(m => {
                 totalSum += (m.cost || 0);
-                const typeInfo = MAINT_TYPES[m.type] || { label: m.type, icon: '🔧' };
-                const formattedDate = new Date(m.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const typeInfo = (typeof MAINT_TYPES !== 'undefined' && MAINT_TYPES[m.type]) 
+                    ? MAINT_TYPES[m.type] 
+                    : { label: m.type, icon: '🔧' };
+
+                const formattedDate = new Date(m.date).toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
 
                 return `
                     <div class="card" style="margin-bottom: 12px; padding: 18px;">
@@ -1425,65 +1433,18 @@
                                     ${typeInfo.icon} ${typeInfo.label}
                                 </span>
                                 <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">
-                                    ${formattedDate} ${m.odometer ? '• ' + m.odometer.toLocaleString() + ' km' : ''}
+                                    ${formattedDate} ${m.odometer ? '• ' + Number(m.odometer).toLocaleString() + ' km' : ''}
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">${m.cost.toFixed(2)} €</div>
+                                <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">${Number(m.cost || 0).toFixed(2)} €</div>
                                 <div style="display: flex; gap: 6px; margin-top: 5px; justify-content: flex-end;">
                                     <button class="btn-icon btn-edit" onclick="openEditMaintModal(${m.id})" title="Editar">✏️</button>
                                     <button class="btn-icon btn-delete" onclick="deleteMaintenance(${m.id})" title="Borrar">🗑️</button>
                                 </div>
                             </div>
                         </div>
-                        ${m.notes ? `<div style="margin-top: 10px; font-size: 0.88rem; color: var(--text-secondary); background: var(--bg); padding: 10px; border-radius: 8px;">📝 ${m.notes}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
-
-            if (totalElem) totalElem.textContent = `Total: ${totalSum.toFixed(2)} €`;
-        }
-
-        function renderMaintenances() {
-            const list = document.getElementById('maintenanceList');
-            const totalElem = document.getElementById('totalMaintCost');
-
-            if (!list) return;
-
-            if (maintenances.length === 0) {
-                list.innerHTML = `
-                    <div class="card empty-state">
-                        <p>No hay mantenimientos registrados en este vehículo.</p>
-                    </div>
-                `;
-                if (totalElem) totalElem.textContent = 'Total: 0.00 €';
-                return;
-            }
-
-            let totalSum = 0;
-
-            list.innerHTML = maintenances.map(m => {
-                totalSum += (m.cost || 0);
-                const typeInfo = MAINT_TYPES[m.type] || { label: m.type, icon: '🔧' };
-                const formattedDate = new Date(m.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-                return `
-                    <div class="card" style="margin-bottom: 12px; padding: 18px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div>
-                                <span class="badge" style="background: var(--bg); color: var(--text); border: 1px solid var(--border);">
-                                    ${typeInfo.icon} ${typeInfo.label}
-                                </span>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">
-                                    ${formattedDate} ${m.odometer ? '• ' + m.odometer.toLocaleString() + ' km' : ''}
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">${m.cost.toFixed(2)} €</div>
-                                <button class="btn-icon btn-delete" onclick="deleteMaintenance(${m.id})" style="margin-top: 5px; margin-left: auto;" title="Borrar">🗑️</button>
-                            </div>
-                        </div>
-                        ${m.notes ? `<div style="margin-top: 10px; font-size: 0.88rem; color: var(--text-secondary); background: var(--bg); padding: 10px; border-radius: 8px;">📝 ${m.notes}</div>` : ''}
+                        ${m.notes ? `<div style="margin-top: 10px; font-size: 0.88rem; color: var(--text-secondary); background: var(--bg); padding: 10px; border-radius: 8px;">📄 ${m.notes}</div>` : ''}
                     </div>
                 `;
             }).join('');
