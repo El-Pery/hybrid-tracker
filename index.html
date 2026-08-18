@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-	<link rel="manifest" href="manifest.json">
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hybrid Tracker Pro</title>
     <meta name="theme-color" content="#2563eb">
@@ -104,14 +104,16 @@
             top: 60px;
             z-index: 99;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow-x: auto;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 14px 8px;
+            min-width: 70px;
+            padding: 12px 6px;
             border: none;
             background: var(--card);
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             font-weight: 600;
             color: var(--text-secondary);
             cursor: pointer;
@@ -135,8 +137,8 @@
             content: '';
             position: absolute;
             bottom: 0;
-            left: 15%;
-            right: 15%;
+            left: 10%;
+            right: 10%;
             height: 3px;
             background: var(--primary);
             border-radius: 3px 3px 0 0;
@@ -343,18 +345,6 @@
             background: #fecaca;
         }
 
-        .btn-success {
-            background: linear-gradient(135deg, var(--electric) 0%, #059669 100%);
-            color: white;
-        }
-
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 0.85rem;
-            margin-top: 0;
-            width: auto;
-        }
-
         .vehicle-list {
             display: flex;
             flex-direction: column;
@@ -398,7 +388,6 @@
             color: var(--primary);
         }
 
-        /* Historial cronológico - MÁS RECIENTES PRIMERO */
         .timeline {
             position: relative;
             padding-left: 30px;
@@ -775,6 +764,14 @@
             color: var(--text-secondary);
         }
 
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
         @media (max-width: 480px) {
             .container {
                 padding: 15px;
@@ -804,23 +801,27 @@
 
     <header>
        <div class="header-content">
-   	     <div>
-        	    <h1>⚡ Hybrid Tracker</h1>
-        	    <div style="font-size: 0.7rem; opacity: 0.9; margin-top: 2px;">
-        	        v1.0 • by Peri
-       	     </div>
-       </div>
-             <div class="vehicle-selector" onclick="switchTab('vehicles')">
-        	    <span id="currentVehicleName">Sin vehículo</span>
-        	    <span>▼</span>
-             </div>
-    	</div>
+            <div>
+                <h1>⚡ Hybrid Tracker</h1>
+                <div style="font-size: 0.7rem; opacity: 0.9; margin-top: 2px;">
+                    v1.1 • by Peri
+                </div>
+            </div>
+            <div class="vehicle-selector" onclick="switchTab('vehicles')">
+                <span id="currentVehicleName">Sin vehículo</span>
+                <span>▼</span>
+            </div>
+        </div>
     </header>
 
     <nav class="tab-nav">
         <button class="tab-btn active" onclick="switchTab('register')">
             <span class="tab-icon">➕</span>
             <span>Registrar</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('maintenance')">
+            <span class="tab-icon">🛠️</span>
+            <span>Mantenimiento</span>
         </button>
         <button class="tab-btn" onclick="switchTab('analysis')">
             <span class="tab-icon">📊</span>
@@ -836,7 +837,6 @@
         </button>
     </nav>
 
-    <!-- PESTAÑA REGISTRAR -->
     <div id="tab-register" class="tab-content active">
         <div class="container">
             <div id="registerVehicleBanner"></div>
@@ -898,14 +898,72 @@
 
                     <button type="submit" class="btn btn-primary">
                         <span>💾</span>
-                        Guardar
+                        Guardar Repostaje
                     </button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- PESTAÑA ANÁLISIS -->
+    <div id="tab-maintenance" class="tab-content">
+        <div class="container">
+            <div id="maintVehicleBanner"></div>
+
+            <div class="card">
+                <h2>🛠️ Registrar Mantenimiento</h2>
+                <form id="maintenanceForm" onsubmit="saveMaintenance(event)">
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>📅 Fecha</label>
+                        <input type="date" id="maintDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>⚙️ Tipo de Mantenimiento</label>
+                        <select id="maintType" required>
+                            <option value="official">🛠️ Mantenimiento oficial (Marca)</option>
+                            <option value="tires">🛞 Cambio de neumáticos</option>
+                            <option value="breakdown">⚙️ Avería / Reparación</option>
+                            <option value="brakes">🛑 Frenos (Discos / Pastillas)</option>
+                            <option value="battery">🔋 Batería / S. Eléctrico</option>
+                            <option value="itv">📝 ITV</option>
+                            <option value="other">🔍 Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🛣️ Kilometraje actual (km)</label>
+                        <input type="number" id="maintOdometer" placeholder="Ej: 45000" step="1" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>💰 Coste (€)</label>
+                        <input type="number" id="maintCost" placeholder="0.00" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="optional-field">
+                        <div class="optional-label">
+                            <span>📝</span>
+                            <span>Notas / Detalle</span>
+                        </div>
+                        <textarea id="maintNotes" placeholder="Ej: Cambio de aceite, filtro de aire y revisión de niveles..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span>💾</span> Guardar Mantenimiento
+                    </button>
+                </form>
+            </div>
+
+            <div style="margin-top: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="font-size: 1.1rem; color: var(--text);">Historial de Mantenimientos</h3>
+                    <span id="totalMaintCost" style="font-weight: 700; font-size: 1rem; color: var(--primary);">Total: 0.00 €</span>
+                </div>
+                <div id="maintenanceList"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="tab-analysis" class="tab-content">
         <div class="container">
             <div id="analysisVehicleBanner"></div>
@@ -924,7 +982,6 @@
         </div>
     </div>
 
-    <!-- PESTAÑA VEHÍCULOS -->
     <div id="tab-vehicles" class="tab-content">
         <div class="container">
             <div class="card">
@@ -938,54 +995,59 @@
         </div>
     </div>
 
-    <!-- PESTAÑA AJUSTES -->
-			<div id="tab-settings" class="tab-content">
-				<div class="container">
-					<div class="card">
-						<h2 style="margin-bottom: 20px;">📤 Exportar datos</h2>
-						<button class="btn btn-secondary" onclick="exportToCSV()" style="margin-bottom: 10px;">
-							<span>📄</span> Exportar a CSV
-						</button>
-						<button class="btn btn-secondary" onclick="exportToJSON()">
-							<span>💾</span> Backup completo (JSON)
-						</button>
-					</div>
+    <div id="tab-settings" class="tab-content">
+        <div class="container">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">📤 Exportar Datos</h2>
+                <button class="btn btn-secondary" onclick="exportToCSV()" style="margin-bottom: 10px;">
+                    <span>📄</span> Exportar Repostajes (CSV)
+                </button>
+                <button class="btn btn-secondary" onclick="exportMaintenancesToCSV()" style="margin-bottom: 10px;">
+                    <span>🛠️</span> Exportar Mantenimientos (CSV)
+                </button>
+                <button class="btn btn-secondary" onclick="exportToJSON()">
+                    <span>💾</span> Backup Completo (JSON)
+                </button>
+            </div>
 
-					<div class="card" style="margin-top: 20px;">
-						<h2 style="margin-bottom: 20px;">📥 Importar datos</h2>
+            <div class="card" style="margin-top: 20px;">
+                <h2 style="margin-bottom: 20px;">📥 Importar Datos</h2>
+
+                <input type="file" id="importCsvInput" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
+                <input type="file" id="importMaintCsvInput" accept=".csv" style="display: none;" onchange="importMaintenancesFromCSV(event)">
+                <input type="file" id="importJsonInput" accept=".json" style="display: none;" onchange="importFromJSON(event)">
+
+                <button class="btn btn-secondary" onclick="document.getElementById('importCsvInput').click()" style="margin-bottom: 10px;">
+                    <span>📄</span> Importar Repostajes (CSV)
+                </button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importMaintCsvInput').click()" style="margin-bottom: 10px;">
+                    <span>🛠️</span> Importar Mantenimientos (CSV)
+                </button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importJsonInput').click()">
+                    <span>💾</span> Restaurar Backup Completo (JSON)
+                </button>
+            </div>
             
-						<!-- Inputs ocultos para seleccionar archivo -->
-						<input type="file" id="importCsvInput" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
-						<input type="file" id="importJsonInput" accept=".json" style="display: none;" onchange="importFromJSON(event)">
+            <div class="card" style="margin-top: 20px;">
+                <h2 style="margin-bottom: 20px;">🎨 Apariencia</h2>
+                <div class="settings-item">
+                    <div>
+                        <h3>Modo oscuro</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Cambiar tema</p>
+                    </div>
+                    <div class="toggle" id="darkModeToggle" onclick="toggleDarkMode()"></div>
+                </div>
+            </div>
 
-						<button class="btn btn-secondary" onclick="document.getElementById('importCsvInput').click()" style="margin-bottom: 10px;">
-							<span>📄</span> Importar desde CSV
-						</button>
-						<button class="btn btn-secondary" onclick="document.getElementById('importJsonInput').click()">
-							<span>💾</span> Restaurar Backup (JSON)
-						</button>
-					</div>
-        
-					<div class="card" style="margin-top: 20px;">
-						<h2 style="margin-bottom: 20px;">🎨 Apariencia</h2>
-							<div class="settings-item">
-								<div>
-										<h3>Modo oscuro</h3>
-									<p style="font-size: 0.85rem; color: var(--text-secondary);">Cambiar tema</p>
-								</div>
-							<div class="toggle" id="darkModeToggle" onclick="toggleDarkMode()"></div>
-							</div>
-							</div>
-	    <div class="card" style="margin-top: 20px; text-align: center; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
-		    <div style="font-size: 1.2rem; font-weight: 700;">Hybrid Tracker Pro</div>
-		    <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.0</div>
-		    <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px;">Desarrollado por Peri</div>
-		    <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 10px;">© 2026</div>
-	    </div>
+            <div class="card" style="margin-top: 20px; text-align: center; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
+                <div style="font-size: 1.2rem; font-weight: 700;">Hybrid Tracker Pro</div>
+                <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.1</div>
+                <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px;">Desarrollado por Peri</div>
+                <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 10px;">© 2026</div>
+            </div>
         </div>
     </div>
 
-    <!-- Modal Añadir Vehículo -->
     <div class="modal-overlay" id="vehicleModal">
         <div class="modal">
             <div class="modal-header">
@@ -1013,7 +1075,6 @@
         </div>
     </div>
 
-    <!-- Modal Editar Registro -->
     <div class="modal-overlay" id="editModal">
         <div class="modal">
             <div class="modal-header">
@@ -1070,11 +1131,24 @@
         let vehicles = JSON.parse(localStorage.getItem('hybridVehicles')) || [];
         let currentVehicleId = localStorage.getItem('hybridCurrentVehicle') || null;
         let entries = [];
+        let maintenances = [];
+
+        const MAINT_TYPES = {
+            official: { label: 'Mantenimiento Oficial', icon: '🛠️' },
+            tires: { label: 'Cambio de Neumáticos', icon: '🛞' },
+            breakdown: { label: 'Avería / Reparación', icon: '⚙️' },
+            brakes: { label: 'Frenos', icon: '🛑' },
+            battery: { label: 'Batería / S. Eléctrico', icon: '🔋' },
+            itv: { label: 'ITV', icon: '📝' },
+            other: { label: 'Otro', icon: '🔍' }
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             loadCurrentVehicle();
             initDarkMode();
-            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            document.getElementById('maintDate').value = today;
             
             document.getElementById('price').addEventListener('input', calculateTotal);
             document.getElementById('amount').addEventListener('input', calculateTotal);
@@ -1086,18 +1160,23 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             
             document.getElementById(`tab-${tab}`).classList.add('active');
-            event.target.closest('.tab-btn').classList.add('active');
+            
+            const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(`'${tab}'`));
+            if (btn) btn.classList.add('active');
             
             if (tab === 'analysis') renderAnalysis();
+            if (tab === 'maintenance') renderMaintenances();
         }
 
         function loadCurrentVehicle() {
             if (currentVehicleId && vehicles.find(v => v.id === currentVehicleId)) {
                 entries = JSON.parse(localStorage.getItem(`hybridEntries_${currentVehicleId}`)) || [];
+                maintenances = JSON.parse(localStorage.getItem(`hybridMaintenances_${currentVehicleId}`)) || [];
                 updateVehicleDisplay();
             } else if (vehicles.length > 0) {
                 currentVehicleId = vehicles[0].id;
                 entries = JSON.parse(localStorage.getItem(`hybridEntries_${currentVehicleId}`)) || [];
+                maintenances = JSON.parse(localStorage.getItem(`hybridMaintenances_${currentVehicleId}`)) || [];
                 updateVehicleDisplay();
             }
         }
@@ -1112,15 +1191,17 @@
                     <div class="vehicle-banner">
                         <div class="vehicle-info">
                             <h3>${vehicle.brand} ${vehicle.model}</h3>
-                            <p>${entries.length} registros</p>
+                            <p>${entries.length} repostajes • ${maintenances.length} mantenimientos</p>
                         </div>
                     </div>
                 `;
                 document.getElementById('registerVehicleBanner').innerHTML = bannerHtml;
+                document.getElementById('maintVehicleBanner').innerHTML = bannerHtml;
                 document.getElementById('analysisVehicleBanner').innerHTML = bannerHtml;
             } else {
                 nameEl.textContent = 'Sin vehículo';
                 document.getElementById('registerVehicleBanner').innerHTML = '';
+                document.getElementById('maintVehicleBanner').innerHTML = '';
                 document.getElementById('analysisVehicleBanner').innerHTML = '';
             }
             
@@ -1135,12 +1216,13 @@
             }
             
             container.innerHTML = vehicles.map(v => {
-                const count = JSON.parse(localStorage.getItem(`hybridEntries_${v.id}`) || '[]').length;
+                const countEntries = JSON.parse(localStorage.getItem(`hybridEntries_${v.id}`) || '[]').length;
+                const countMaint = JSON.parse(localStorage.getItem(`hybridMaintenances_${v.id}`) || '[]').length;
                 return `
                     <div class="vehicle-item ${v.id === currentVehicleId ? 'active' : ''}" onclick="selectVehicle('${v.id}')">
                         <div>
                             <h3>${v.brand} ${v.model}</h3>
-                            <p style="font-size: 0.85rem; color: var(--text-secondary);">${v.year || ''} • ${count} registros</p>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary);">${v.year || ''} • ${countEntries} repostajes • ${countMaint} mantenimientos</p>
                         </div>
                     </div>
                 `;
@@ -1173,7 +1255,7 @@
             }
             
             hideModal();
-            updateVehicleDisplay();
+            loadCurrentVehicle();
             showToast('🚗 Vehículo añadido');
         }
 
@@ -1181,6 +1263,7 @@
             currentVehicleId = id;
             localStorage.setItem('hybridCurrentVehicle', id);
             loadCurrentVehicle();
+            renderMaintenances();
             showToast('✅ Vehículo cambiado');
         }
 
@@ -1227,7 +1310,97 @@
             showToast('✅ Guardado');
         }
 
-        // ANÁLISIS CON ORDEN INVERSO (MÁS RECIENTES PRIMERO)
+        /* --- MANTENIMIENTOS --- */
+        function saveMaintenance(e) {
+            e.preventDefault();
+            if (!currentVehicleId) {
+                showToast('⚠️ Selecciona o crea un vehículo primero');
+                return;
+            }
+
+            const newMaint = {
+                id: Date.now(),
+                date: document.getElementById('maintDate').value,
+                type: document.getElementById('maintType').value,
+                odometer: parseFloat(document.getElementById('maintOdometer').value),
+                cost: parseFloat(document.getElementById('maintCost').value),
+                notes: document.getElementById('maintNotes').value.trim()
+            };
+
+            maintenances.unshift(newMaint);
+            saveMaintenancesToStorage();
+            renderMaintenances();
+            updateVehicleDisplay();
+
+            document.getElementById('maintenanceForm').reset();
+            document.getElementById('maintDate').value = new Date().toISOString().split('T')[0];
+            showToast('🛠️ Mantenimiento guardado');
+        }
+
+        function saveMaintenancesToStorage() {
+            if (currentVehicleId) {
+                localStorage.setItem(`hybridMaintenances_${currentVehicleId}`, JSON.stringify(maintenances));
+            }
+        }
+
+        function deleteMaintenance(id) {
+            if (confirm('¿Eliminar este registro de mantenimiento?')) {
+                maintenances = maintenances.filter(m => m.id !== id);
+                saveMaintenancesToStorage();
+                renderMaintenances();
+                updateVehicleDisplay();
+                showToast('🗑️ Registro eliminado');
+            }
+        }
+
+        function renderMaintenances() {
+            const list = document.getElementById('maintenanceList');
+            const totalElem = document.getElementById('totalMaintCost');
+
+            if (!list) return;
+
+            if (maintenances.length === 0) {
+                list.innerHTML = `
+                    <div class="card empty-state">
+                        <p>No hay mantenimientos registrados en este vehículo.</p>
+                    </div>
+                `;
+                if (totalElem) totalElem.textContent = 'Total: 0.00 €';
+                return;
+            }
+
+            let totalSum = 0;
+
+            list.innerHTML = maintenances.map(m => {
+                totalSum += (m.cost || 0);
+                const typeInfo = MAINT_TYPES[m.type] || { label: m.type, icon: '🔧' };
+                const formattedDate = new Date(m.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+                return `
+                    <div class="card" style="margin-bottom: 12px; padding: 18px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <span class="badge" style="background: var(--bg); color: var(--text); border: 1px solid var(--border);">
+                                    ${typeInfo.icon} ${typeInfo.label}
+                                </span>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">
+                                    ${formattedDate} ${m.odometer ? '• ' + m.odometer.toLocaleString() + ' km' : ''}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">${m.cost.toFixed(2)} €</div>
+                                <button class="btn-icon btn-delete" onclick="deleteMaintenance(${m.id})" style="margin-top: 5px; margin-left: auto;" title="Borrar">🗑️</button>
+                            </div>
+                        </div>
+                        ${m.notes ? `<div style="margin-top: 10px; font-size: 0.88rem; color: var(--text-secondary); background: var(--bg); padding: 10px; border-radius: 8px;">📝 ${m.notes}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            if (totalElem) totalElem.textContent = `Total: ${totalSum.toFixed(2)} €`;
+        }
+
+        /* --- ANÁLISIS --- */
         function renderAnalysis() {
             if (!currentVehicleId || entries.length === 0) {
                 document.getElementById('analysisStats').innerHTML = '';
@@ -1241,9 +1414,7 @@
                 return;
             }
             
-            // Ordenar de MÁS RECIENTE a MÁS ANTIGUO para mostrar
             const sortedForDisplay = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
-            // Ordenar de MÁS ANTIGUO a MÁS RECIENTE para cálculos
             const sortedForCalc = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
             
             renderStats();
@@ -1350,22 +1521,18 @@
             });
         }
 
-        // TIMELINE: MÁS RECIENTES PRIMERO
         function renderTimeline(sortedForDisplay, sortedForCalc) {
             const container = document.getElementById('historyTimeline');
             
             container.innerHTML = `
                 <div class="timeline">
-                    ${sortedForDisplay.map((entry, displayIndex) => {
-                        // Encontrar índice en el array ordenado para cálculos
+                    ${sortedForDisplay.map((entry) => {
                         const calcIndex = sortedForCalc.findIndex(e => e.id === entry.id);
                         const prevEntry = calcIndex > 0 ? sortedForCalc[calcIndex - 1] : null;
                         const km = prevEntry ? entry.odometer - prevEntry.odometer : 0;
                         
-                        // Calcular análisis híbrido si es gasolina
                         let hybridHtml = '';
                         if (entry.type === 'gasoline' && calcIndex > 0) {
-                            // Buscar repostaje de gasolina anterior en el orden cronológico
                             const prevGasIndex = sortedForCalc.slice(0, calcIndex).reverse().findIndex(e => e.type === 'gasoline');
                             if (prevGasIndex !== -1) {
                                 const actualPrevGasIndex = calcIndex - 1 - prevGasIndex;
@@ -1512,37 +1679,58 @@
             showToast('🗑️ Eliminado');
         }
 
-function exportToCSV() {
-    if (!currentVehicleId || entries.length === 0) {
-        showToast('⚠️ No hay datos');
-        return;
-    }
-    
-    const vehicle = vehicles.find(v => v.id === currentVehicleId);
-    // Usar punto y coma como separador (estándar Excel español)
-    let csv = 'Fecha;Tipo;Odometro;Cantidad;Precio;Total;Notas\n';
-    
-    entries.forEach(e => {
-        // Traducir tipo a español
-        const tipo = e.type === 'electric' ? 'Electrico' : 'Gasolina';
-        
-        // Usar coma como separador decimal (formato español)
-        const odometer = e.odometer.toString().replace('.', ',');
-        const amount = e.amount.toString().replace('.', ',');
-        const price = e.price.toString().replace('.', ',');
-        const total = e.total.toString().replace('.', ',');
-        
-        csv += `${e.date};${tipo};${odometer};${amount};${price};${total};"${e.notes || ''}"\n`;
-    });
-    
-    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `hybrid-${vehicle.brand}-${vehicle.model}.csv`;
-    a.click();
-    showToast('📄 CSV descargado');
-}
+        /* --- EXPORTAR E IMPORTAR --- */
+        function downloadFile(content, fileName, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportToCSV() {
+            if (!currentVehicleId || entries.length === 0) {
+                showToast('⚠️ No hay repostajes para exportar');
+                return;
+            }
+            
+            const vehicle = vehicles.find(v => v.id === currentVehicleId);
+            let csv = 'Fecha;Tipo;Odometro;Cantidad;Precio;Total;Notas\n';
+            
+            entries.forEach(e => {
+                const tipo = e.type === 'electric' ? 'Electrico' : 'Gasolina';
+                const odometer = e.odometer.toString().replace('.', ',');
+                const amount = e.amount.toString().replace('.', ',');
+                const price = e.price.toString().replace('.', ',');
+                const total = e.total.toString().replace('.', ',');
+                
+                csv += `${e.date};${tipo};${odometer};${amount};${price};${total};"${(e.notes || '').replace(/"/g, '""')}"\n`;
+            });
+            
+            downloadFile(csv, `repostajes_${vehicle ? vehicle.brand + '_' + vehicle.model : currentVehicleId}.csv`, 'text/csv;charset=utf-8;');
+            showToast('📄 Repostajes exportados');
+        }
+
+        function exportMaintenancesToCSV() {
+            if (!currentVehicleId || maintenances.length === 0) {
+                showToast('⚠️ No hay mantenimientos para exportar');
+                return;
+            }
+
+            const vehicle = vehicles.find(v => v.id === currentVehicleId);
+            let csv = 'Fecha;Tipo;Kilometraje;Coste;Notas\n';
+
+            maintenances.forEach(m => {
+                const typeLabel = MAINT_TYPES[m.type] ? MAINT_TYPES[m.type].label : m.type;
+                const cost = m.cost.toString().replace('.', ',');
+                csv += `${m.date};"${typeLabel}";${m.odometer || 0};${cost};"${(m.notes || '').replace(/"/g, '""')}"\n`;
+            });
+
+            downloadFile(csv, `mantenimientos_${vehicle ? vehicle.brand + '_' + vehicle.model : currentVehicleId}.csv`, 'text/csv;charset=utf-8;');
+            showToast('🛠️ Mantenimientos exportados');
+        }
 
         function exportToJSON() {
             const data = {
@@ -1552,134 +1740,194 @@ function exportToCSV() {
             };
             
             vehicles.forEach(v => {
-                data[`entries_${v.id}`] = JSON.parse(localStorage.getItem(`hybridEntries_${v.id}`) || '[]');
+                data[`hybridEntries_${v.id}`] = JSON.parse(localStorage.getItem(`hybridEntries_${v.id}`) || '[]');
+                data[`hybridMaintenances_${v.id}`] = JSON.parse(localStorage.getItem(`hybridMaintenances_${v.id}`) || '[]');
             });
             
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `hybrid-backup-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            showToast('💾 Backup guardado');
+            downloadFile(JSON.stringify(data, null, 2), `hybrid_tracker_backup_${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+            showToast('💾 Backup completo guardado');
         }
-		function importFromCSV(event) {
-			const file = event.target.files[0];
-			if (!file) return;
 
-			if (!currentVehicleId) {
-				showToast('⚠️ Selecciona o crea un vehículo primero');
-				event.target.value = '';
-				return;
-			}
+        function importFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-			const reader = new FileReader();
-			reader.onload = function(e) {
-				try {
-					const lines = e.target.result.split('\n');
-					if (lines.length < 2) throw new Error("Archivo vacío o sin datos");
+            if (!currentVehicleId) {
+                showToast('⚠️ Selecciona un vehículo primero');
+                event.target.value = '';
+                return;
+            }
 
-					let importedCount = 0;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const lines = e.target.result.split('\n');
+                    if (lines.length < 2) throw new Error("Archivo vacío");
 
-					// Ignorar la primera línea (cabecera)
-					for (let i = 1; i < lines.length; i++) {
-						const line = lines[i].trim();
-						if (!line) continue;
+                    let count = 0;
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
 
-						// Separar por ; (estándar Excel español)
-						const columns = line.split(';');
-						if (columns.length < 6) continue;
+                        const cols = line.split(';');
+                        if (cols.length < 6) continue;
 
-						const [date, tipoRaw, odometerRaw, amountRaw, priceRaw, totalRaw, notesRaw] = columns;
+                        const [date, tipoRaw, odoRaw, amountRaw, priceRaw, totalRaw, notesRaw] = cols;
 
-						const type = tipoRaw.toLowerCase().includes('elect') ? 'electric' : 'gasoline';
-						const odometer = parseFloat(odometerRaw.replace(',', '.'));
-						const amount = parseFloat(amountRaw.replace(',', '.'));
-						const price = parseFloat(priceRaw.replace(',', '.'));
-						const total = totalRaw ? parseFloat(totalRaw.replace(',', '.')) : parseFloat((amount * price).toFixed(2));
-						const notes = notesRaw ? notesRaw.replace(/^"|"$/g, '') : null;
+                        const type = tipoRaw.toLowerCase().includes('elect') ? 'electric' : 'gasoline';
+                        const odometer = parseFloat(odoRaw.replace(',', '.'));
+                        const amount = parseFloat(amountRaw.replace(',', '.'));
+                        const price = parseFloat(priceRaw.replace(',', '.'));
+                        const total = totalRaw ? parseFloat(totalRaw.replace(',', '.')) : parseFloat((amount * price).toFixed(2));
+                        const notes = notesRaw ? notesRaw.replace(/^"|"$/g, '') : null;
 
-						if (isNaN(odometer) || isNaN(amount) || isNaN(price)) continue;
+                        if (isNaN(odometer) || isNaN(amount) || isNaN(price)) continue;
 
-						// Evitar duplicar un registro exactamente igual en la misma fecha y odómetro
-						const exists = entries.some(e => e.date === date && e.odometer === odometer);
-						if (!exists) {
-							entries.push({
-								id: Date.now() + Math.floor(Math.random() * 1000),
-								date,
-								type,
-								odometer,
-								amount,
-								price,
-								total,
-								notes
-							});
-							importedCount++;
-						}
-					}
+                        const exists = entries.some(e => e.date === date && e.odometer === odometer);
+                        if (!exists) {
+                            entries.push({
+                                id: Date.now() + Math.floor(Math.random() * 1000),
+                                date,
+                                type,
+                                odometer,
+                                amount,
+                                price,
+                                total,
+                                notes
+                            });
+                            count++;
+                        }
+                    }
 
-					if (importedCount > 0) {
-						localStorage.setItem(`hybridEntries_${currentVehicleId}`, JSON.stringify(entries));
-						updateVehicleDisplay();
-						showToast(`✅ ${importedCount} registros importados`);
-					} else {
-						showToast('ℹ️ No se añadieron nuevos registros');
-					}
-				} catch (err) {
-					console.error(err);
-					showToast('❌ Error al procesar el archivo CSV');
-				}
-				event.target.value = ''; // Limpiar selección
-			};
-			reader.readAsText(file, 'UTF-8');
-		}
+                    if (count > 0) {
+                        localStorage.setItem(`hybridEntries_${currentVehicleId}`, JSON.stringify(entries));
+                        updateVehicleDisplay();
+                        showToast(`✅ ${count} repostajes importados`);
+                    } else {
+                        showToast('ℹ️ Sin nuevos registros');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('❌ Error al procesar CSV');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
 
-		function importFromJSON(event) {
-			const file = event.target.files[0];
-			if (!file) return;
+        function importMaintenancesFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-			if (!confirm('¿Quieres restaurar los datos? Se sobreescribirán los datos actuales con los del archivo.')) {
-				event.target.value = '';
-				return;
-			}
+            if (!currentVehicleId) {
+                showToast('⚠️ Selecciona un vehículo primero');
+                event.target.value = '';
+                return;
+            }
 
-			const reader = new FileReader();
-			reader.onload = function(e) {
-				try {
-					const data = JSON.parse(e.target.result);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const lines = e.target.result.split('\n');
+                    if (lines.length < 2) throw new Error("Archivo vacío");
 
-					if (!data.vehicles || !Array.isArray(data.vehicles)) {
-						throw new Error("Formato de backup inválido");
-					}
+                    let count = 0;
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
 
-					// Restaurar lista de vehículos
-					vehicles = data.vehicles;
-					localStorage.setItem('hybridVehicles', JSON.stringify(vehicles));
+                        const cols = line.split(';');
+                        if (cols.length < 4) continue;
 
-					// Restaurar entradas de cada vehículo
-					vehicles.forEach(v => {
-						const key = `entries_${v.id}`;
-						if (data[key]) {
-							localStorage.setItem(`hybridEntries_${v.id}`, JSON.stringify(data[key]));
-						}
-					});
+                        const [date, typeRaw, odoRaw, costRaw, notesRaw] = cols;
 
-					// Restablecer vehículo seleccionado
-					currentVehicleId = data.currentVehicleId || (vehicles.length > 0 ? vehicles[0].id : null);
-					if (currentVehicleId) {
-						localStorage.setItem('hybridCurrentVehicle', currentVehicleId);
-					}
+                        const cleanType = (typeRaw || '').replace(/"/g, '').toLowerCase();
+                        let matchedType = 'other';
+                        for (const [key, val] of Object.entries(MAINT_TYPES)) {
+                            if (val.label.toLowerCase() === cleanType) {
+                                matchedType = key;
+                                break;
+                            }
+                        }
 
-					loadCurrentVehicle();
-					showToast('💾 Copia de seguridad restaurada');
-				} catch (err) {
-					console.error(err);
-					showToast('❌ Error al leer el archivo de backup JSON');
-				}
-				event.target.value = ''; // Limpiar selección
-			};
-			reader.readAsText(file);
-		}
+                        const odometer = parseFloat(odoRaw.replace(',', '.'));
+                        const cost = parseFloat(costRaw.replace(',', '.'));
+                        const notes = notesRaw ? notesRaw.replace(/^"|"$/g, '') : '';
+
+                        if (isNaN(cost)) continue;
+
+                        maintenances.push({
+                            id: Date.now() + Math.floor(Math.random() * 1000),
+                            date,
+                            type: matchedType,
+                            odometer: isNaN(odometer) ? 0 : odometer,
+                            cost,
+                            notes
+                        });
+                        count++;
+                    }
+
+                    if (count > 0) {
+                        saveMaintenancesToStorage();
+                        renderMaintenances();
+                        updateVehicleDisplay();
+                        showToast(`✅ ${count} mantenimientos importados`);
+                    } else {
+                        showToast('ℹ️ Sin nuevos registros');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('❌ Error al procesar CSV');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function importFromJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!confirm('¿Restaurar datos? Se sobrescribirán los datos actuales.')) {
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (!data.vehicles || !Array.isArray(data.vehicles)) {
+                        throw new Error("Formato de backup inválido");
+                    }
+
+                    vehicles = data.vehicles;
+                    localStorage.setItem('hybridVehicles', JSON.stringify(vehicles));
+
+                    vehicles.forEach(v => {
+                        const eKey = `hybridEntries_${v.id}`;
+                        const mKey = `hybridMaintenances_${v.id}`;
+
+                        if (data[eKey]) localStorage.setItem(eKey, JSON.stringify(data[eKey]));
+                        if (data[mKey]) localStorage.setItem(mKey, JSON.stringify(data[mKey]));
+                    });
+
+                    currentVehicleId = data.currentVehicleId || (vehicles.length > 0 ? vehicles[0].id : null);
+                    if (currentVehicleId) {
+                        localStorage.setItem('hybridCurrentVehicle', currentVehicleId);
+                    }
+
+                    loadCurrentVehicle();
+                    showToast('💾 Backup restaurado con éxito');
+                } catch (err) {
+                    console.error(err);
+                    showToast('❌ Error al leer el backup JSON');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
 
         function initDarkMode() {
             if (localStorage.getItem('hybridDarkMode') === 'true') {
@@ -1708,8 +1956,7 @@ function exportToCSV() {
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
     </script>
-	<script>
-    // Registrar Service Worker
+    <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js')
         .then(reg => console.log('Service Worker registrado'))
