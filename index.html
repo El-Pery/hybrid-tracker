@@ -1393,6 +1393,29 @@
                 localStorage.setItem(`hybridMaintenances_${currentVehicleId}`, JSON.stringify(maintenances));
             }
         }
+function deleteMaintenance(id) {
+            if (!confirm('¿Seguro que deseas eliminar este registro de mantenimiento?')) return;
+
+            // Filtrar el array global de mantenimientos
+            if (typeof maintenances !== 'undefined') {
+                maintenances = maintenances.filter(m => m.id !== id);
+            }
+
+            // Si tienes la función de guardar en LocalStorage, la llamamos
+            if (typeof saveMaintenancesToStorage === 'function') {
+                saveMaintenancesToStorage();
+            }
+
+            // Volver a renderizar la lista
+            if (typeof renderMaintenances === 'function') {
+                renderMaintenances();
+            }
+
+            // Mostrar aviso visual si existe la función
+            if (typeof showToast === 'function') {
+                showToast('🗑️ Mantenimiento eliminado');
+            }
+        }		
 
 function renderMaintenances() {
             const list = document.getElementById('maintenanceList');
