@@ -804,7 +804,7 @@
             <div>
                 <h1>⚡ Hybrid Tracker</h1>
                 <div style="font-size: 0.7rem; opacity: 0.9; margin-top: 2px;">
-                    v1.3 • by Peri
+                    v1.4 • by Peri
                 </div>
             </div>
             <div class="vehicle-selector" onclick="switchTab('vehicles')">
@@ -1041,7 +1041,7 @@
 
             <div class="card" style="margin-top: 20px; text-align: center; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
                 <div style="font-size: 1.2rem; font-weight: 700;">Hybrid Tracker Pro</div>
-                <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.3</div>
+                <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.4</div>
                 <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px;">Desarrollado por Peri</div>
                 <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 10px;">© 2026</div>
             </div>
@@ -1166,7 +1166,11 @@
                     <label>📝 Notas / Detalle</label>
                     <textarea id="editMaintNotes"></textarea>
                 </div>
-
+				<div class="form-group">
+                    <label>📷 Factura / Ticket (Foto)</label>
+                    <input type="file" id="editMaintImage" accept="image/*" capture="environment">
+                    <div id="editMaintImagePreview" style="margin-top: 8px;"></div>
+                </div>
                 <div style="display: flex; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditMaintModal()" style="flex: 1;">Cancelar</button>
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar cambios</button>
@@ -1468,7 +1472,8 @@ function renderMaintenances() {
                             </div>
                         </div>
                         ${m.notes ? `<div style="margin-top: 10px; font-size: 0.88rem; color: var(--text-secondary); background: var(--bg); padding: 10px; border-radius: 8px;">📄 ${m.notes}</div>` : ''}
-                    </div>
+						${m.image ? `<div style="margin-top: 10px;"><a href="${m.image}" target="_blank"><img src="${m.image}" style="width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);" title="Toca para ver a tamaño completo"></a></div>` : ''}
+					</div>
                 `;
             }).join('');
 
@@ -1764,10 +1769,54 @@ function renderMaintenances() {
             document.getElementById('editMaintOdometer').value = maint.odometer || 0;
             document.getElementById('editMaintCost').value = maint.cost;
             document.getElementById('editMaintNotes').value = maint.notes || '';
+            
+            // Mostrar vista previa si ya existe una foto guardada
+            const preview = document.getElementById('editMaintImagePreview');
+            if (maint.image) {
+                preview.innerHTML = `<img src="${maint.image}" style="max-width: 100%; max-height: 120px; border-radius: 8px; border: 1px solid var(--border);">`;
+            } else {
+                preview.innerHTML = '';
+            }
 
             document.getElementById('editMaintModal').classList.add('show');
         }
 
+        async function saveMaintEdit(e) {
+            e.preventDefault();
+
+            const id = parseInt(document.getElementById('editMaintId').value);
+            const index = maintenances.findIndex(m => m.id === id);
+
+            if (index === -1) return;
+
+            const fileInput = document.getElementById('editMaintImage');
+            let imageBase64 = maintenances[index].image || null;
+
+            // Si el usuario seleccionó una imagen nueva, la convertimos
+            if (fileInput.files && fileInput.files[0]) {
+                imageBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(fileInput.files[0]);
+                });
+            }
+
+            maintenances[index] = {
+                id,
+                date: document.getElementById('editMaintDate').value,
+                type: document.getElementById('editMaintType').value,
+                odometer: parseFloat(document.getElementById('editMaintOdometer').value),
+                cost: parseFloat(document.getElementById('editMaintCost').value),
+                notes: document.getElementById('editMaintNotes').value.trim(),
+                image: imageBase64
+            };
+
+            if (typeof saveMaintenancesToStorage === 'function') saveMaintenancesToStorage();
+            closeEditMaintModal();
+            renderMaintenances();
+            if (typeof showToast === 'function') showToast('✅ Mantenimiento actualizado');
+        }
+		
         function closeEditMaintModal() {
             document.getElementById('editMaintModal').classList.remove('show');
         }
