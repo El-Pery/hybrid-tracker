@@ -804,7 +804,7 @@
             <div>
                 <h1>⚡ Hybrid Tracker</h1>
                 <div style="font-size: 0.7rem; opacity: 0.9; margin-top: 2px;">
-                    v1.4 • by Peri
+                    v1.5 • by Peri
                 </div>
             </div>
             <div class="vehicle-selector" onclick="switchTab('vehicles')">
@@ -946,7 +946,11 @@
                             <span>Notas / Detalle</span>
                         </div>
                         <textarea id="maintNotes" placeholder="Ej: Cambio de aceite, filtro de aire y revisión de niveles..."></textarea>
-                    </div>
+                    <div class="form-group">
+						<label>📷 Factura / Ticket (Foto)</label>
+						<input type="file" id="maintImage" accept="image/*" capture="environment">
+					</div>
+					</div>
 
                     <button type="submit" class="btn btn-primary">
                         <span>💾</span> Guardar Mantenimiento
@@ -1041,7 +1045,7 @@
 
             <div class="card" style="margin-top: 20px; text-align: center; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
                 <div style="font-size: 1.2rem; font-weight: 700;">Hybrid Tracker Pro</div>
-                <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.4</div>
+                <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Versión 1.5</div>
                 <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px;">Desarrollado por Peri</div>
                 <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 10px;">© 2026</div>
             </div>
@@ -1366,31 +1370,43 @@
         }
 
         /* --- MANTENIMIENTOS --- */
-        function saveMaintenance(e) {
-            e.preventDefault();
-            if (!currentVehicleId) {
-                showToast('⚠️ Selecciona o crea un vehículo primero');
-                return;
-            }
+		async function saveMaintenance(e) {
+			e.preventDefault();
+				if (!currentVehicleId) {
+					showToast('⚠️ Selecciona o crea un vehículo primero');
+				return;
+			}
 
-            const newMaint = {
-                id: Date.now(),
-                date: document.getElementById('maintDate').value,
-                type: document.getElementById('maintType').value,
-                odometer: parseFloat(document.getElementById('maintOdometer').value),
-                cost: parseFloat(document.getElementById('maintCost').value),
-                notes: document.getElementById('maintNotes').value.trim()
-            };
+			const fileInput = document.getElementById('maintImage');
+			let imageBase64 = null;
 
-            maintenances.unshift(newMaint);
-            saveMaintenancesToStorage();
-            renderMaintenances();
-            updateVehicleDisplay();
+			if (fileInput && fileInput.files && fileInput.files[0]) {
+				imageBase64 = await new Promise((resolve) => {
+					const reader = new FileReader();
+					reader.onload = (ev) => resolve(ev.target.result);
+					reader.readAsDataURL(fileInput.files[0]);
+				});
+			}
 
-            document.getElementById('maintenanceForm').reset();
-            document.getElementById('maintDate').value = new Date().toISOString().split('T')[0];
-            showToast('🛠️ Mantenimiento guardado');
-        }
+			const newMaint = {
+				id: Date.now(),
+				date: document.getElementById('maintDate').value,
+				type: document.getElementById('maintType').value,
+				odometer: parseFloat(document.getElementById('maintOdometer').value),
+				cost: parseFloat(document.getElementById('maintCost').value),
+				notes: document.getElementById('maintNotes').value.trim(),
+				image: imageBase64
+			};
+
+			maintenances.unshift(newMaint);
+			saveMaintenancesToStorage();
+			renderMaintenances();
+			updateVehicleDisplay();
+
+			document.getElementById('maintenanceForm').reset();
+			document.getElementById('maintDate').value = new Date().toISOString().split('T')[0];
+			showToast('🛠️ Mantenimiento guardado');
+		}
 
         function saveMaintenancesToStorage() {
             if (currentVehicleId) {

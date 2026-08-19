@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hybrid-tracker-v1.4';
+const CACHE_NAME = 'hybrid-tracker-v1.5';
 const urlsToCache = [
   './',
   './index.html',
